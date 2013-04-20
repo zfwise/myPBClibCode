@@ -1,0 +1,45 @@
+I was trying to install Glib library so that I can use it to serialize and unserialize my public parameters, MSK, and other stuffs.
+
+Its seems that the BSWABE use Glib.
+
+And I installed few other package through apt-get install...when the configure of Glib said that those packages are missing. Zlib for example
+One of the error is about PCRE, or PCER, aha, i dont remember the name. Its about UTF-8 and Unicode. It turns out i used the wrong params when doing ./configure, i should use the internal PCER, which was explained in Glib's webpage. 
+
+After that, I tried to include the glib.h in my code, however, it turns out that the system can't find the glib.h. Since the GCC has no idea about the glib.h
+so I change the compile command to:
+gcc -o w12ibe_test w12ibe_test.c `pkg-config --cflags --libs glib-2.0` -I ~/.local/include/pbc -L ~/.local/lib -Wl,-rpath ~/.local/lib  -l pbc
+see the pkg-config ... ...? it tells the GCC the location of my glib-2.0 lib. And now I can successfully complie my code.
+
+I'll continue use Glib and lets see what I'm end up with. lol~
+
+Oh, Glib works fine~
+However, I got stuck by openssl/aes.h and I aleady installed openssl-dev
+and I still got errors. 
+I have to add -lssl -lcrypto at the end of compile command:
+gcc -o enc enc.c `pkg-config --cflags --libs glib-2.0` -I ~/.local/include/pbc -L ~/.local/lib -Wl,-rpath ~/.local/lib  -l pbc -lssl -lcrypto
+
+it tells GCC where to find the crypto things.
+
+Ohye, Its done.
+The next step is some annotation, etc
+and then the signature scheme.
+
+
+I switch to the Charm-crypto since the Charm seems more powerful.
+I have finished the implementation of W12ibe and I stored the code under pbc-0.5.12/w12ibe folder.
+Here are some remaining problems:
+1. The release of the memory. I didn' release any memory in the code since the OS will release them at the end of execution. Maybe, we need to release memories to improve efficiency.
+2. In PBC website, there is a benchmark that says the efficiency will be improved if we use pre-processed pairing. Well, in the w12ibe implementation, I didn't use the pre-processed mode. Maybe, if we want to improve the efficiency, we can use it.
+3. Here is the benchmark:
+MNT curve with degree=6, d159,
+Enc:26 ms, Dec 78, Sig 180 ver 89.(in normal mode, not in pre-processed mode)
+BBIBE, Type A curve, degree 2
+Enc 9.4 (same key, same user; only need one exp). 
+Enc 29 (Different user, which means different keys, need a pairing and about 3 exp)
+Dec 9.4 ms (Only one pairing and some XOR and Hash, by the way, hash and XOR are not taken into consideration)
+
+BLS:
+TYPE A curve:
+sig 8.7 ver 19 ms
+MNT d159 d=6
+sig 2.647 ver 37.5 ms
